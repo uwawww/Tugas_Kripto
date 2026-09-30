@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vigenère Cipher – Classical Cryptography</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="hero">
+    <h1>VIGENÈRE CIPHER</h1>
+    <p class="subtitle">Classical Cryptography</p>
+    <p class="lead">
+      Vigenère Cipher adalah cipher substitusi <strong>polialfabetik</strong> yang memakai
+      sebuah kata kunci (<em>keyword</em>). Setiap huruf digeser sejauh nilai huruf key
+      yang bersesuaian, sehingga huruf yang sama bisa menjadi huruf berbeda.
+    </p>
+  </header>
+
+  <main class="container">
+    <!-- INPUT -->
+    <section class="card" aria-labelledby="input-title">
+      <h2 id="input-title">INPUT</h2>
+
+      <label for="text">Plaintext / Ciphertext</label>
+      <textarea id="text" rows="5" placeholder="Contoh: HELLO WORLD" spellcheck="false"></textarea>
+
+      <label for="key">Key</label>
+      <input id="key" type="text" placeholder="Contoh: KEY" autocomplete="off" spellcheck="false">
+
+      <div class="actions">
+        <button id="btn-encrypt" class="btn primary" type="button">ENCRYPT</button>
+        <button id="btn-decrypt" class="btn secondary" type="button">DECRYPT</button>
+        <button id="btn-clear" class="btn ghost" type="button">CLEAR</button>
+      </div>
+
+      <div id="message" class="message" role="alert" hidden></div>
+    </section>
+
+    <!-- RESULT -->
+    <section id="result-card" class="card" aria-labelledby="result-title" hidden>
+      <div class="card-head">
+        <h2 id="result-title">RESULT</h2>
+        <button id="btn-copy" class="btn small" type="button">COPY RESULT</button>
+      </div>
+      <p id="result-label" class="muted"></p>
+      <div id="result" class="result-box" aria-live="polite"></div>
+      <p class="muted">Effective key:</p>
+      <div id="effective-key" class="result-box key-box"></div>
+    </section>
+
+    <!-- PROCESS -->
+    <section id="process-card" class="card" aria-labelledby="process-title" hidden>
+      <h2 id="process-title">PROCESS DETAIL</h2>
+      <p class="muted">Setiap huruf diproses satu per satu. Spasi, angka, dan tanda baca dilewati dan tidak menggeser key.</p>
+      <div class="table-wrap">
+        <table class="process-table">
+          <thead>
+            <tr>
+              <th>Position</th><th>Input</th><th>Key</th><th>Input Value</th>
+              <th>Key Value</th><th>Operation</th><th>Output</th>
+            </tr>
+          </thead>
+          <tbody id="process-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- STEGANOGRAPHY -->
+    <section id="stego-card" class="card" aria-labelledby="stego-title">
+      <h2 id="stego-title">STEGANOGRAPHY · VIGENÈRE + LSB</h2>
+      <p class="muted">Pesan dienkripsi dengan Vigenère lebih dulu, lalu disembunyikan pada bit terakhir (LSB) warna piksel gambar. Hasilnya berupa gambar PNG yang tampak sama dengan aslinya. Kosongkan key jika ingin menyisipkan tanpa enkripsi.</p>
+
+      <div class="tabs" role="tablist">
+        <button id="st-tab-embed" class="tab active" type="button" role="tab" aria-selected="true">ENCRYPT</button>
+        <button id="st-tab-extract" class="tab" type="button" role="tab" aria-selected="false">DECRYPT</button>
+      </div>
+
+      <div id="st-panel-embed">
+        <label for="st-e-file">Gambar cover (PNG / BMP / JPEG / WEBP, maks 8 MB)</label>
+        <input id="st-e-file" type="file" accept="image/png,image/bmp,image/jpeg,image/webp">
+        <p id="st-e-capacity" class="muted"></p>
+
+        <label for="st-e-text">Pesan rahasia</label>
+        <textarea id="st-e-text" rows="4" placeholder="Contoh: HELLO WORLD" spellcheck="false"></textarea>
+
+        <label for="st-e-key">Key Vigenère (opsional)</label>
+        <input id="st-e-key" type="text" placeholder="Contoh: KEY" autocomplete="off" spellcheck="false">
+
+        <div class="actions">
+          <button id="st-e-btn" class="btn primary" type="button">HIDE MESSAGE</button>
+        </div>
+
+        <div id="st-e-result" hidden>
+          <h3>Hasil</h3>
+          <p id="st-e-stats" class="muted"></p>
+          <img id="st-e-img" class="stego-img" alt="Gambar hasil steganografi">
+          <p class="muted">Teks yang disisipkan (ciphertext):</p>
+          <div id="st-e-cipher" class="result-box"></div>
+          <div class="actions">
+            <a id="st-e-download" class="btn secondary" href="#" download="stego-image.png">DOWNLOAD PNG</a>
+          </div>
+          <p class="muted">Simpan sebagai PNG. Jangan dikonversi ke JPEG atau dikompres ulang karena pesan akan rusak.</p>
+        </div>
+      </div>
+
+      <div id="st-panel-extract" hidden>
+        <label for="st-x-file">Gambar stego (PNG hasil penyisipan)</label>
+        <input id="st-x-file" type="file" accept="image/png,image/bmp,image/jpeg,image/webp">
+
+        <label for="st-x-key">Key Vigenère (wajib jika pesan dienkripsi)</label>
+        <input id="st-x-key" type="text" placeholder="Contoh: KEY" autocomplete="off" spellcheck="false">
+
+        <div class="actions">
+          <button id="st-x-btn" class="btn secondary" type="button">EXTRACT MESSAGE</button>
+        </div>
+
+        <div id="st-x-result" hidden>
+          <h3>Hasil</h3>
+          <p class="muted">Data yang diambil dari gambar:</p>
+          <div id="st-x-raw" class="result-box key-box"></div>
+          <p id="st-x-plain-label" class="muted"></p>
+          <div id="st-x-plain" class="result-box"></div>
+        </div>
+      </div>
+
+      <div id="st-message" class="message" role="alert" hidden></div>
+    </section>
+
+    <!-- VIGENERE TABLE -->
+    <section class="card" aria-labelledby="table-title">
+      <h2 id="table-title">VIGENÈRE TABLE</h2>
+      <p class="muted">Tabula recta 26×26. Baris = huruf key, kolom = huruf plaintext, perpotongannya = huruf ciphertext. Arahkan kursor ke sel untuk menyorot baris dan kolom.</p>
+      <div class="table-wrap tabula-wrap">
+        <table id="vigenere-table" class="tabula"></table>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="card about" aria-labelledby="about-title">
+      <h2 id="about-title">ABOUT VIGENÈRE CIPHER</h2>
+
+      <h3>Pengertian</h3>
+      <p>Vigenère Cipher adalah metode enkripsi teks yang memakai serangkaian Caesar Cipher berbeda-beda berdasarkan huruf-huruf pada sebuah keyword. Setiap huruf plaintext digeser sejauh nilai huruf key pasangannya.</p>
+
+      <h3>Sejarah singkat</h3>
+      <p>Metode ini pertama kali dijelaskan oleh Giovan Battista Bellaso pada 1553, lalu belakangan dikaitkan dengan diplomat Prancis Blaise de Vigenère, sehingga dikenal dengan namanya. Selama sekitar tiga abad cipher ini dijuluki <em>le chiffre indéchiffrable</em> ("cipher yang tak terpecahkan") sampai Friedrich Kasiski menerbitkan metode pemecahannya pada 1863.</p>
+
+      <h3>Jenis cipher</h3>
+      <p>Cipher substitusi polialfabetik: satu huruf plaintext dapat dipetakan ke beberapa huruf ciphertext berbeda, tergantung posisinya terhadap key. Ini berbeda dengan cipher monoalfabetik seperti Caesar yang selalu memetakan satu huruf ke satu huruf yang sama.</p>
+
+      <h3>Key dan cara kerja</h3>
+      <p>Key adalah kata (misalnya <code>KEY</code>) yang diulang sepanjang teks. Setiap huruf diberi nilai A=0 sampai Z=25. Contoh untuk <code>HELLO WORLD</code>:</p>
+      <pre class="code">Plaintext : HELLO WORLD
+Key       : KEYKE YKEYK   (diulang, hanya untuk huruf)
+Ciphertext: RIJVS UYVJN</pre>
+
+      <div class="grid-2">
+        <div>
+          <h3>Proses enkripsi</h3>
+          <ol>
+            <li>Ubah huruf plaintext dan huruf key menjadi angka 0–25.</li>
+            <li>Jumlahkan keduanya.</li>
+            <li>Ambil sisa bagi 26.</li>
+            <li>Ubah angka hasil kembali menjadi huruf.</li>
+          </ol>
+          <p class="formula">C = (P + K) mod 26</p>
+        </div>
+        <div>
+          <h3>Proses dekripsi</h3>
+          <ol>
+            <li>Ubah huruf ciphertext dan huruf key menjadi angka.</li>
+            <li>Kurangkan nilai key dari nilai ciphertext.</li>
+            <li>Jika hasil negatif, tambahkan 26 (lewat mod 26).</li>
+            <li>Ubah angka hasil menjadi huruf.</li>
+          </ol>
+          <p class="formula">P = (C − K) mod 26</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <h3>Kelebihan</h3>
+          <ul>
+            <li>Sederhana dan mudah diimplementasikan.</li>
+            <li>Analisis frekuensi huruf biasa tidak langsung berhasil karena frekuensi huruf "diratakan" oleh banyak alfabet.</li>
+            <li>Lebih kuat daripada Caesar Cipher.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Kelemahan</h3>
+          <ul>
+            <li>Key yang berulang meninggalkan pola yang bisa dideteksi (Kasiski examination, Index of Coincidence).</li>
+            <li>Setelah panjang key diketahui, cipher terpecah menjadi beberapa Caesar Cipher yang mudah dipecahkan.</li>
+            <li>Key pendek dan mudah ditebak melemahkan keamanan.</li>
+            <li>Tidak aman untuk kebutuhan modern.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Mengapa termasuk classical cryptography?</h3>
+      <p>Vigenère bekerja langsung pada huruf alfabet, cukup dihitung dengan tangan atau alat sederhana, dan hanya memakai operasi substitusi. Ia dikembangkan sebelum era komputer dan sebelum teori kriptografi modern (misalnya keamanan komputasional dan model ancaman formal). Karena itu Vigenère dipelajari sebagai dasar konsep kunci, substitusi, dan kriptanalisis, bukan untuk melindungi data nyata.</p>
+    </section>
+  </main>
+
+  <footer class="footer">Vigenère Cipher · Flask + Vanilla JS + LSB Steganography · Diproses lokal, tanpa database</footer>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/stego.js') }}"></script>
+</body>
+</html>
